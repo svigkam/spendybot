@@ -1,6 +1,6 @@
 import logging
 
-API_TOKEN = "5609404514:AAGLI0_U1L3zugDkg085PtB8DADCh9wzito"
+API_TOKEN = 0  #TELEGRAM TOKEN
 STATS_PERIOD = 31  # day
 
 def logging_config():
