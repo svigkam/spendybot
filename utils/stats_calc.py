@@ -1,4 +1,7 @@
-from models.operation_model import Operation
+import random
+from datetime import datetime
+
+from models.operation_model import Operation, Category
 import repositories.db_repo as db
 from matplotlib import pyplot as plt
 
@@ -12,24 +15,70 @@ async def get_user_data_for_period(user_id: int) -> list:
     return [expenses, incomes]
 
 
-async def get_expenses_graphic(user_id: int) -> str:
+async def get_expenses_category_graphic(user_id: int) -> str:
     data: list[Operation] = (await get_user_data_for_period(user_id))[0]
-
     categories = []
-    for i in data:
-        if i.category not in categories:
-            categories.append(i.category)
+    for operation in data:
+        if Category[operation.category].value[2:] not in categories:
+            categories.append(Category[operation.category].value[2:])
 
     amounts = [0 for _ in range(len(categories))]
-    for i in data:
-        amounts[categories.index(i.category)] += i.amount
-
-    fig1, ax1 = plt.subplots()
-    ax1.pie(amounts, labels=categories, autopct='%1.1f%%',
-            shadow=True, startangle=90)
-    ax1.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
+    for operation in data:
+        amounts[categories.index(Category[operation.category].value[2:])] += operation.amount
+    explode = [0.1 for _ in range(len(categories))]
+    fig, ax = plt.subplots()
+    ax.pie(amounts, labels=categories, autopct='%1.1f%%', shadow=True, explode=explode,
+           wedgeprops={'lw': 1, 'ls': '--', 'edgecolor': "k"}, rotatelabels=True)
+    ax.axis("equal")
 
     filename = f'get_expenses_graphic_{user_id}.png'
+    plt.savefig(filename)
+    return filename
+
+
+async def get_expenses_graphic_by_days(user_id: int) -> str:
+    data: list[Operation] = (await get_user_data_for_period(user_id))[0]
+
+    i = 0
+    date = []
+    amount = [0]
+    for operation in data:
+        if len(date) == 0:
+            date.append(operation.date.strftime("%d.%m"))
+        if operation.date.strftime("%d.%m") != date[i]:
+            date.append(operation.date.strftime("%d.%m"))
+            i += 1
+            amount.append(0)
+        amount[i] += int(operation.amount)
+
+    plt.bar(date, amount)
+    plt.title('Ваши расходы:')
+    filename = f'get_expenses_graphic_by_days_{user_id}.png'
+    plt.savefig(filename)
+    return filename
+
+
+async def get_incomes_graphic_by_days(user_id: int) -> str:
+    data: list[Operation] = (await get_user_data_for_period(user_id))[1]
+
+    if not data:
+        return 'Error'
+
+    i = 0
+    date = []
+    amount = [0]
+    for operation in data:
+        if len(date) == 0:
+            date.append(operation.date.strftime("%d.%m"))
+        if operation.date.strftime("%d.%m") != date[i]:
+            date.append(operation.date.strftime("%d.%m"))
+            i += 1
+            amount.append(0)
+        amount[i] += int(operation.amount)
+
+    plt.bar(date, amount)
+    plt.title('Ваши доходы:')
+    filename = f'get_incomes_graphic_by_days_{user_id}.png'
     plt.savefig(filename)
     return filename
 

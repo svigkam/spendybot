@@ -8,7 +8,8 @@ from aiogram.dispatcher.storage import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from keyboards import mainKeyboard, get_profileKeyboard, cancelKeyboard, startKeyboard, statsKeyboard
 from main import dp, bot
-from utils.stats_calc import get_sum_expenses_and_incomes_for_period, get_expenses_graphic
+from utils.stats_calc import get_sum_expenses_and_incomes_for_period, get_expenses_category_graphic, \
+    get_expenses_graphic_by_days, get_incomes_graphic_by_days
 
 
 class RegisterStatesGroup(StatesGroup):
@@ -71,7 +72,8 @@ async def set_balance(message: types.Message):
 
 @dp.callback_query_handler(lambda cb: cb.data == 'set_balance')
 async def cmd_set_balance(callback: types.CallbackQuery):
-    await callback.message.answer('Так, давай установим тебе новый баланс. Напиши чему он должен равняться:')
+    await callback.message.answer('📍 Так, давай установим тебе новый баланс. Напиши чему он должен равняться:',
+                                  reply_markup=cancelKeyboard)
     await SetUserBalanceStatesGroup.balance.set()
     await callback.answer(' ')
 
@@ -85,7 +87,7 @@ async def cmd_set_balance_check(message: types.Message):
 async def handle_cmd_set_balance(message: types.Message, state: FSMContext):
     async with state.proxy():
         await db.update_user_balance(user_id=message.from_user.id, balance=message.text)
-    await message.answer('Отлично! Твой баланс установлен.', reply_markup=mainKeyboard)
+    await message.answer('✅ Отлично! Твой баланс установлен.', reply_markup=mainKeyboard)
     await state.finish()
 
 
@@ -96,7 +98,7 @@ async def handle_cmd_set_balance(message: types.Message, state: FSMContext):
 async def cmd_stats(message: types.Message):
     user = await db.get_user(message.from_user.id)
     user_stat = await get_sum_expenses_and_incomes_for_period(user_id=message.from_user.id)
-    filename = await get_expenses_graphic(message.from_user.id)
+    filename = await get_expenses_category_graphic(message.from_user.id)
     print(filename)
     with open(filename, 'rb') as photo:
         await bot.send_photo(chat_id=message.from_user.id, photo=photo,
@@ -111,13 +113,35 @@ async def cmd_profile(message: types.Message):
     await message.answer(f'👤 Настройки твоего профиля:', reply_markup=get_profileKeyboard(user_notice))
 
 
+@dp.message_handler(text='Доходы')
+async def cmd_incomes(message: types.Message):
+    filename = await get_incomes_graphic_by_days(message.from_user.id)
+    if filename != 'Error':
+        with open(filename, 'rb') as photo:
+            await bot.send_photo(chat_id=message.from_user.id, photo=photo)
+            os.remove(filename)
+    else:
+        await message.answer(f'❌ Операций нет!', reply_markup=statsKeyboard)
+
+
+@dp.message_handler(text='Расходы')
+async def cmd_expenses(message: types.Message):
+    filename = await get_expenses_graphic_by_days(message.from_user.id)
+    if filename != 'Error':
+        with open(filename, 'rb') as photo:
+            await bot.send_photo(chat_id=message.from_user.id, photo=photo)
+            os.remove(filename)
+    else:
+        await message.answer(f'❌ Операций нет!', reply_markup=statsKeyboard)
+
+
 # ========================= EDIT NOTICE =========================
 
 @dp.callback_query_handler(lambda cb: cb.data == 'notice_toggle')
 async def notice_toggler(callback: types.Message):
     await db.update_user_notice(callback.from_user.id)
-    user_notice = (await db.get_user(callback.from_user.id)).notice
-    await bot.edit_message_text(f'👤 Настройки твоего профиля:', reply_markup=get_profileKeyboard(user_notice))
+    user_notice = await db.get_user(callback.from_user.id)
+    await bot.edit_message_text(f'👤 Настройки твоего профиля:', reply_markup=get_profileKeyboard(user_notice.notice))
 
 
 # ========================= DELETE PROFILE =========================

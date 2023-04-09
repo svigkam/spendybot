@@ -57,7 +57,8 @@ async def update_user_balance(user_id: int, balance: float):
 
 async def update_user_notice(user_id: int):
     user = await get_user(user_id)
-    await db.update_user(user_id, user.balance, not user.notice)
+    new_notice = not user.notice
+    await db.update_user(user_id, user.balance, new_notice)
 
 
 async def auto_update_user_balance(user_id: int, amount: float):
@@ -105,3 +106,7 @@ async def get_all_expense_operations(user_id: int, period: int) -> list[Operatio
     format_period = datetime.timestamp(datetime.now()) - period
     request_data = await db.get_all_operations_from_type_and_period(user_id, 'Expense', format_period)
     return Operation.from_db_to_operation(request_data)
+
+
+async def delete_operation_by_id(user_id: int, id: int):
+    await db.delete_operation_by_id(user_id, id)

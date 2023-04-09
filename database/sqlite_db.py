@@ -65,3 +65,7 @@ async def get_all_operations_from_type_and_period(user_id: int, operation_type: 
                        f"WHERE user_id = {user_id} and "
                        f"operation_type = '{operation_type}' and "
                        f"date > {period}").fetchall()
+
+
+async def delete_operation_by_id(user_id: int, id: int):
+    cur.execute(f"DELETE FROM operations WHERE user_id = {user_id} and ID = {id}")

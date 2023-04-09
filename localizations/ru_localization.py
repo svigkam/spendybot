@@ -9,7 +9,7 @@ CMD_START_MESSAGE = """
 
 def CMD_STATS_MESSAGE(balance, user_stat) -> str:
     return f"""
-<b>📄 Твоя статистика:</b>
+<b>🗓 Твоя статистика:</b>
 
 💰 Твой баланс: {balance} ₽
 

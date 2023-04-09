@@ -26,7 +26,7 @@ def get_profileKeyboard(notice: bool) -> InlineKeyboardMarkup:
 
 statsKeyboard = ReplyKeyboardMarkup(keyboard=[
     [KeyboardButton('Показать историю')],
-    # [KeyboardButton('Расходы'), KeyboardButton('Доходы')],
+    [KeyboardButton('Расходы'), KeyboardButton('Доходы')],
     [KeyboardButton('Назад'), KeyboardButton('Совет')]
 ], resize_keyboard=True)
 

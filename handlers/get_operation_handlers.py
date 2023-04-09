@@ -45,3 +45,17 @@ async def page_callback_handler(callback: types.CallbackQuery):
     await callback.answer(' ')
 
 
+# ========================= DELETE OPERATION =========================
+
+
+@dp.message_handler(text='Удалить операцию')
+async def cmd_delete_operation(message: types.Message):
+    await message.answer('Для удаления покупки введите "Удалить операцию НОМЕР_ОПЕРАЦИИ". '
+                         'К примеру "Удалить операцию 175685" ', parse_mode='HTML')
+
+
+@dp.message_handler(lambda message: message.text.startswith('Удалить операцию '))
+async def cmd_delete_operation(message: types.Message):
+    query = message.text[17:]
+    await db.delete_operation_by_id(message.from_user.id, query)
+    await message.answer('😊 Если такова и существовала, то её больше нет!', parse_mode='HTML')
